@@ -5,7 +5,9 @@ const App = () => {
   const [books, setBooks] = useState([]);
   const [newBook, setNewBook] = useState({ title: '', author: '', image_url: ''});
   const [editBook, setEditBook] = useState(null);
-  const uri = 'https://scaling-parakeet-5gv9p6vpv6c4977-5001.app.github.dev/'
+  const [error, setError] = useState('');
+  const uri = 'https://ominous-train-9774xq9p6qqgc769g-5001.app.github.dev/'
+
   useEffect(() => {
     fetchBooks();
   }, []);
@@ -21,6 +23,7 @@ const App = () => {
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
+    setError(''); // Clear error when user starts typing
     if (editBook) {
       setEditBook({ ...editBook, [name]: value });
     } else {
@@ -28,7 +31,17 @@ const App = () => {
     }
   };
 
+  const validateForm = (book) => {
+    if (!book.title.trim() || !book.author.trim() || !book.image_url.trim()) {
+      setError('All fields are required. Please fill out the form completely.');
+      return false;
+    }
+    return true;
+  };
+
   const handleCreateBook = async () => {
+    if (!validateForm(newBook)) return;
+
     try {
       const response = await axios.post(`${uri}/books`, newBook);
       setBooks([...books, response.data]);
@@ -40,9 +53,12 @@ const App = () => {
 
   const handleEditBook = (book) => {
     setEditBook({ ...book });
+    setError(''); // Clear error when editing starts
   };
 
   const handleUpdateBook = async () => {
+    if (!validateForm(editBook)) return;
+
     try {
       const response = await axios.put(`${uri}/books/${editBook.id}`, editBook);
       const updatedBooks = books.map((book) =>
@@ -68,6 +84,7 @@ const App = () => {
   return (
     <div>
       <h1>Book List</h1>
+      {error && <p style={{ color: 'red' }}>{error}</p>} {/* Error message display */}
       <table>
         <thead>
           <tr>
@@ -83,13 +100,13 @@ const App = () => {
             <tr key={book.id}>
               <td>{book.id}</td>
               <td>
-              {editBook && editBook.id === book.id ? (
-                <input
-                  type="text"
-                  name="image_url"
-                  value={editBook.image_url}
-                  onChange={handleInputChange}
-                />
+                {editBook && editBook.id === book.id ? (
+                  <input
+                    type="text"
+                    name="image_url"
+                    value={editBook.image_url}
+                    onChange={handleInputChange}
+                  />
                 ) : (
                   <img src={book.image_url} alt={book.title} width="50" /> 
                 )}
